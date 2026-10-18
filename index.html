@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>On mange où ?</title>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{--basil:#12503A;--basil2:#0C3A2A;--tomato:#F2543D;--paper:#FBF8F1;--ink:#1B1B18;--butter:#FFD65C;--mint:#8FD3C8;--plum:#C77DA8;--mute:#6b6a60}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--basil);color:var(--paper);font:400 16px/1.45 Figtree,system-ui,sans-serif;-webkit-tap-highlight-color:transparent}
+main{max-width:480px;margin:0 auto;padding:max(16px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom))}
+h1,h2,h3{font-family:"Bricolage Grotesque",Figtree,system-ui,sans-serif;margin:0}
+h1{font-weight:800;font-size:clamp(2.7rem,13vw,4.2rem);line-height:.92;color:var(--butter);letter-spacing:-.02em;margin:18px 0 12px}
+.lead{color:#d7e8de;max-width:34ch;margin:0 0 20px}
+.panel{background:var(--paper);color:var(--ink);border-radius:22px;padding:18px;display:grid;gap:14px}
+label{display:grid;gap:6px;font-weight:600;font-size:.92rem}
+input,select{font:inherit;color:var(--ink);background:#fff;border:1.5px solid #d9d4c4;border-radius:12px;padding:11px 12px;width:100%}
+input[type=range]{padding:0;accent-color:var(--tomato)}
+input[type=checkbox]{width:20px;height:20px;accent-color:var(--tomato)}
+.chk{display:flex;align-items:center;gap:10px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.seg{font:inherit;font-weight:600;border:1.5px solid #d9d4c4;background:#fff;color:var(--ink);padding:11px;border-radius:12px}
+.seg.on{background:var(--basil);color:#fff;border-color:var(--basil)}
+.loc{display:grid;grid-template-columns:1fr auto;gap:8px}
+button{font:inherit;cursor:pointer}
+.cta{background:var(--tomato);color:#fff;border:0;border-radius:14px;padding:15px;font-weight:600;font-size:1.05rem;text-align:center;text-decoration:none;display:block}
+.cta.alt{background:var(--butter);color:var(--ink)}
+.cta[disabled]{opacity:.55}
+.ghost{background:transparent;border:1.5px solid currentColor;color:inherit;border-radius:12px;padding:10px 14px;font-weight:600}
+:focus-visible{outline:3px solid var(--butter);outline-offset:2px}
+.top{display:flex;justify-content:space-between;align-items:center;font-size:.9rem;color:#d7e8de;margin-bottom:10px}
+.link{background:none;border:0;color:inherit;text-decoration:underline;padding:4px}
+.code{font:800 clamp(2.6rem,14vw,4rem)/1 "Bricolage Grotesque",sans-serif;letter-spacing:.12em;color:var(--butter);margin:6px 0 14px}
+.who{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0 18px}
+.who span{background:var(--basil2);border-radius:999px;padding:7px 14px;font-weight:600}
+.row{display:grid;gap:10px;margin-top:10px}
+.warn{background:var(--basil2);border-radius:12px;padding:10px 12px;font-size:.88rem;color:#ffe9a8;margin:10px 0}
+.deck{position:relative;height:min(62vh,520px);margin:6px 0 16px}
+.card{position:absolute;inset:0;background:var(--paper);color:var(--ink);border-radius:26px;overflow:hidden;display:flex;flex-direction:column;touch-action:pan-y;user-select:none;box-shadow:0 14px 30px rgba(0,0,0,.28)}
+.card.next{transform:scale(.95) translateY(12px);opacity:.9}
+.band{flex:0 0 46%;display:grid;place-items:center;font-size:5.5rem;position:relative}
+.tag{position:absolute;top:16px;font:800 1.3rem "Bricolage Grotesque",sans-serif;border:3px solid var(--ink);border-radius:10px;padding:2px 10px;opacity:0;font-style:normal;background:var(--paper)}
+.tag.like{left:16px;transform:rotate(-8deg)}.tag.nope{right:16px;transform:rotate(8deg)}
+.card[data-d=like] .tag.like,.card[data-d=nope] .tag.nope{opacity:1}
+.cbody{padding:16px 18px;display:grid;gap:8px;align-content:start}
+.cbody h2{font-weight:800;font-size:1.7rem;line-height:1.05}
+.cbody p{margin:0;color:var(--mute);font-size:.92rem}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips span{border:1.5px solid #d9d4c4;border-radius:999px;padding:3px 10px;font-weight:600;font-size:.85rem}
+.chips .open{border-color:#2d8a5f;color:#1d6b46}.chips .closed{border-color:#c4412e;color:#a3321f}
+.hint{font-size:.8rem;color:var(--mute)}
+.btns{display:flex;justify-content:center;gap:28px}
+.round{width:72px;height:72px;border-radius:50%;border:0;font-size:2rem;box-shadow:0 6px 16px rgba(0,0,0,.25)}
+.round.no{background:var(--paper);color:var(--ink)}.round.yes{background:var(--tomato);color:#fff}
+.match{background:var(--butter);color:var(--ink);border-radius:26px;padding:26px 20px;text-align:center}
+.match .em{font-size:4.5rem}.match h2{font-weight:800;font-size:2.3rem;line-height:1;margin:8px 0 6px}
+.match p{margin:0 0 18px}
+.toast{position:fixed;left:50%;bottom:max(24px,env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:12px;max-width:90vw;z-index:9}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+const SB_URL="https://xoemsyykjtjjwmaydbub.supabase.co";
+const SB_KEY="sb_publishable_ccCdEpjyhqgXdOBwDjBhBw_XB74KW9g";
+const sb=supabase.createClient(SB_URL,SB_KEY);
+const $=s=>document.querySelector(s), app=$("#app");
+const S={session:null,me:null,parts:[],places:[],queue:[],match:null,pos:null,mode:"sur_place",screen:"",channel:null};
+const esc=t=>String(t??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const EMO=[[/sushi|japon|ramen/i,"🍣"],[/burger|hamburger/i,"🍔"],[/pizza/i,"🍕"],[/indien|indian|curry/i,"🍛"],[/italien|italian|pasta/i,"🍝"],[/chinois|chinese/i,"🥡"],[/thaï|thai|vietnam/i,"🍜"],[/mexica|tacos/i,"🌮"],[/liban|oriental|kebab|turc/i,"🧆"],[/français|french|bistro|brasserie/i,"🥖"]];
+const emoji=c=>(EMO.find(([r])=>r.test(c||""))||[0,"🍽️"])[1];
+const BANDS=["#F2543D","#FFD65C","#8FD3C8","#C77DA8"];
+const band=n=>BANDS[[...String(n)].reduce((a,c)=>a+c.charCodeAt(0),0)%4];
+const dist=m=>m==null?"":m<1000?m+" m":(m/1000).toFixed(1).replace(".",",")+" km";
+const mapsUrl=p=>p.google_maps_uri||`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.name)}&query_place_id=${p.google_place_id}`;
+const routeUrl=p=>`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(p.name+" "+(p.address||""))}&destination_place_id=${p.google_place_id}`;
+const isHost=()=>S.session&&S.session.host_id===S.uid;
+const inviteLink=()=>`${location.origin}${location.pathname}?code=${S.session.code}`;
+let tt;function toast(m){clearTimeout(tt);document.querySelector(".toast")?.remove();const d=document.createElement("div");d.className="toast";d.textContent=m;document.body.append(d);tt=setTimeout(()=>d.remove(),3800)}
+function fatal(m){app.innerHTML=`<h1>Oups</h1><p class="lead">${esc(m)}</p>`}
+const save=id=>{try{id?localStorage.setItem("omo_session",id):localStorage.removeItem("omo_session")}catch{}};
+const saved=()=>{try{return localStorage.getItem("omo_session")}catch{return null}};
+
+async function init(){
+  let {data:{session}}=await sb.auth.getSession();
+  if(!session){const r=await sb.auth.signInAnonymously();if(r.error)return fatal("Connexion impossible. Vérifie que « Allow anonymous sign-ins » est activé dans Supabase.");session=r.data.session}
+  S.uid=session.user.id;
+  const code=new URLSearchParams(location.search).get("code");
+  const id=saved();
+  if(id){const {data}=await sb.from("sessions").select("*").eq("id",id).maybeSingle();
+    if(data&&data.status!=="closed"&&(!code||code.toUpperCase()===data.code)){S.session=data;return enter()}save(null)}
+  code?showJoin(code):showHome();
+}
+
+/* ---------- accueil ---------- */
+function showHome(){
+  S.screen="home";
+  const opt=(a)=>a.map(([v,l])=>`<option value="${v}">${l}</option>`).join("");
+  app.innerHTML=`<h1>On mange où&nbsp;?</h1>
+  <p class="lead">Swipe sur les vrais restaurants autour de toi, seul ou à plusieurs. Si quelqu’un aime le même, c’est un match.</p>
+  <button type="button" class="cta alt" id="solo" onclick="create(true)">Restos autour de moi</button>
+  <p class="hint" style="color:#d7e8de;margin:8px 0 18px">Utilise ta position. Les réglages ci-dessous sont facultatifs. <button class="link" onclick="showFavs()">Mes coups de cœur</button></p>
+  <div class="loc" style="margin:0 0 18px"><input id="jc" placeholder="Un code à rejoindre ?" maxlength="6" autocapitalize="characters" style="text-transform:uppercase"><button type="button" class="ghost" style="color:var(--paper)" onclick="joinByCode()">Rejoindre</button></div>
+  <div class="panel">
+   <label>Ton prénom <small>(facultatif en solo)</small><input id="name" maxlength="30" autocomplete="given-name"></label>
+   <div class="seg-row"><button type="button" class="seg on" data-mode="sur_place">Sur place</button><button type="button" class="seg" data-mode="livraison">Livraison</button></div>
+   <label>Rayon&nbsp;: <b id="rv">3 km</b><input type="range" id="rad" min="1" max="10" value="3"></label>
+   <div class="two"><label>Cuisine<select id="cu">${opt([["","Toutes"],["sushi","Sushi"],["burger","Burger"],["pizza","Pizza"],["indien","Indien"],["italien","Italien"],["chinois","Chinois"],["thaï","Thaï"],["mexicain","Mexicain"],["libanais","Libanais"],["français","Français"]])}</select></label>
+   <label>Budget<select id="pr">${opt([["","Tous"],["1","€"],["2","€€"],["3","€€€"],["4","€€€€"]])}</select></label></div>
+   <label class="chk"><input type="checkbox" id="op"> Ouvert maintenant</label>
+   <label>Où êtes-vous&nbsp;?<div class="loc"><input id="addr" placeholder="Ville ou adresse" autocomplete="street-address"><button type="button" id="gps" class="ghost">Ma position</button></div></label>
+   <button type="button" class="ghost" id="go" style="color:var(--ink)" onclick="create(false)">Créer une partie à plusieurs</button>
+  </div>`;
+  app.querySelectorAll(".seg").forEach(b=>b.onclick=()=>{S.mode=b.dataset.mode;app.querySelectorAll(".seg").forEach(x=>x.classList.toggle("on",x===b))});
+  $("#rad").oninput=e=>$("#rv").textContent=e.target.value+" km";
+  $("#gps").onclick=()=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>{S.pos={lat:p.coords.latitude,lng:p.coords.longitude};$("#addr").value="";$("#gps").textContent="Position ✓"},()=>toast("Position refusée : tape une ville ou une adresse."),{timeout:10000}):toast("Position indisponible : tape une adresse.");
+}
+async function geocode(q){
+  try{const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&accept-language=fr&q=${encodeURIComponent(q)}`);const j=await r.json();
+    return j[0]?{lat:+j[0].lat,lng:+j[0].lon}:null}catch{return null}
+}
+function locate(){return new Promise(r=>navigator.geolocation?navigator.geolocation.getCurrentPosition(p=>r(S.pos={lat:p.coords.latitude,lng:p.coords.longitude}),()=>r(null),{timeout:10000}):r(null))}
+async function create(solo){
+  const name=$("#name").value.trim()||(solo?"Moi":"");if(!name)return toast("Entre ton prénom.");
+  const btn=$(solo?"#solo":"#go");btn.disabled=true;
+  const addr=$("#addr").value.trim();
+  const pos=addr?await geocode(addr):(S.pos||await locate());
+  if(!pos){btn.disabled=false;return toast("Indique ta position : bouton « Ma position » ou une adresse trouvable.")}
+  const {data,error}=await sb.rpc("create_session",{p_display_name:name,p_mode:S.mode,p_radius_km:+$("#rad").value,p_cuisine:$("#cu").value||null,p_price_level:$("#pr").value?+$("#pr").value:null,p_open_now:$("#op").checked,p_lat:pos.lat,p_lng:pos.lng});
+  if(error){btn.disabled=false;return toast("Création impossible : "+error.message)}
+  S.session=data;
+  if(solo){btn.textContent="Recherche des restaurants…";await callDeck()}
+  enter();
+}
+
+/* ---------- rejoindre ---------- */
+function showJoin(code){
+  S.screen="join";
+  app.innerHTML=`<h1>On mange où&nbsp;?</h1><p class="lead">On t’a invité à choisir un restaurant. Entre ton prénom pour rejoindre la partie <b>${esc(code.toUpperCase())}</b>.</p>
+  <div class="panel"><label>Ton prénom<input id="name" maxlength="30" autocomplete="given-name"></label><button class="cta" id="go">Rejoindre la partie</button></div>`;
+  $("#go").onclick=async()=>{const n=$("#name").value.trim();if(!n)return toast("Entre ton prénom.");
+    const {data,error}=await sb.rpc("join_session",{p_code:code,p_display_name:n});
+    if(error)return toast("Impossible de rejoindre : "+error.message);
+    const r=await sb.from("sessions").select("*").eq("id",data).single();S.session=r.data;enter()};
+}
+
+/* ---------- partie ---------- */
+async function enter(){save(S.session.id);subscribe();await refresh();
+  setInterval(()=>{if(S.screen==="lobby"||S.screen==="empty")refresh()},3500)}
+let rt;const later=()=>{clearTimeout(rt);rt=setTimeout(refresh,300)};
+function subscribe(){
+  if(S.channel)sb.removeChannel(S.channel);
+  const f=`session_id=eq.${S.session.id}`;
+  S.channel=sb.channel("s-"+S.session.id)
+   .on("postgres_changes",{event:"*",schema:"public",table:"participants",filter:f},later)
+   .on("postgres_changes",{event:"INSERT",schema:"public",table:"matches",filter:f},later)
+   .on("postgres_changes",{event:"UPDATE",schema:"public",table:"sessions",filter:`id=eq.${S.session.id}`},later)
+   .subscribe();
+}
+async function refresh(){
+  const id=S.session.id;
+  const [s,p,pl,m]=await Promise.all([
+    sb.from("sessions").select("*").eq("id",id).single(),
+    sb.from("participants").select("*").eq("session_id",id).order("joined_at"),
+    sb.from("session_places").select("*").eq("session_id",id).order("position"),
+    sb.from("matches").select("*").eq("session_id",id).limit(1)]);
+  if(!s.data){save(null);return location.replace(location.pathname)}
+  S.session=s.data;S.parts=p.data||[];S.places=pl.data||[];
+  S.me=S.parts.find(x=>x.user_id===S.uid);
+  const mt=m.data?.[0];S.match=mt?S.places.find(x=>x.id===mt.session_place_id):null;
+  if(S.match)return showMatch();
+  if(S.screen==="invite"||S.screen==="favs"){$("#who")&&($("#who").innerHTML=S.parts.map(p=>`<span>${esc(p.display_name)}</span>`).join(""));return}
+  if(!S.places.length)return showLobby();
+  const {data:sw}=await sb.from("swipes").select("session_place_id").eq("participant_id",S.me.id);
+  const done=new Set((sw||[]).map(x=>x.session_place_id));
+  let seen=new Set();
+  if(S.parts.length<2){const {data:up}=await sb.from("user_places").select("google_place_id");seen=new Set((up||[]).map(x=>x.google_place_id))}
+  S.queue=S.places.filter(x=>!done.has(x.id)&&!seen.has(x.google_place_id));
+  S.queue.length?showSwipe():showEmpty();
+}
+function leave(){save(null);location.replace(location.pathname)}
+async function callDeck(extra={}){
+  const {data,error}=await sb.functions.invoke("Generate-deck",{body:{session_id:S.session.id,...extra}});
+  if(error){let m="Erreur serveur.";try{m=(await error.context.json()).error||m}catch{}toast(m);return false}
+  if(!data.count)toast(data.message);
+  return true;
+}
+const relaunchBody=()=>({radius_km:Math.min(10,S.session.radius_km+2)});
+
+/* ---------- salon ---------- */
+function showLobby(inv){
+  if(!inv&&S.screen==="lobby"&&$("#who")){$("#who").innerHTML=S.parts.map(p=>`<span>${esc(p.display_name)}</span>`).join("");return}
+  S.screen=inv?"invite":"lobby";
+  const link=inviteLink(),local=location.protocol==="file:";
+  app.innerHTML=`<div class="top"><span>${S.session.mode==="livraison"?"Livraison":"Sur place"}, ${S.session.radius_km} km</span><button class="link" id="lv">Quitter</button></div>
+  <p class="lead" style="margin:0">Code de la partie</p><div class="code">${esc(S.session.code)}</div>
+  ${local?`<div class="warn">Cette page est ouverte depuis un fichier : le lien d’invitation ne fonctionnera pas. Héberge la page (Netlify, Vercel…) pour inviter quelqu’un.</div>`:""}
+  <div class="row"><button class="cta alt" id="cp">Copier le lien</button>
+  ${navigator.share?`<button class="ghost" id="sh">Partager…</button>`:""}
+  <a class="ghost" style="text-align:center;text-decoration:none" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent("On mange où ? Rejoins-moi pour choisir un resto : "+link)}">Envoyer par WhatsApp</a></div>
+  <p class="hint" style="color:#d7e8de;word-break:break-all">Colle le lien où tu veux (SMS, WhatsApp, mail…) ou donne simplement le code : l’autre personne le tape sur l’accueil. ${esc(link)}</p>
+  <h3 style="margin-top:22px">Dans la partie</h3><div class="who" id="who">${S.parts.map(p=>`<span>${esc(p.display_name)}</span>`).join("")}</div>
+  ${inv?`<button class="cta" id="back">Retour au swipe</button><p class="hint" style="color:#d7e8de">Quand ton invité aime un restaurant que tu as déjà aimé, c’est un match.</p>`:isHost()?`<button class="cta" id="start">Lancer le choix</button><p class="hint" style="color:#d7e8de">Il faut être au moins deux pour qu’un match se déclenche.</p>`:`<p class="lead">En attente du lancement par l’hôte…</p>`}`;
+  $("#lv").onclick=leave;
+  $("#cp").onclick=async()=>{try{await navigator.clipboard.writeText(link);toast("Lien copié")}catch{toast("Copie impossible : sélectionne le lien en bas de l’écran.")}};
+  $("#sh")&&($("#sh").onclick=()=>navigator.share({title:"On mange où ?",url:link}).catch(()=>{}));
+  $("#back")&&($("#back").onclick=()=>{S.screen="";refresh()});
+  $("#start")&&($("#start").onclick=async()=>{const b=$("#start");b.disabled=true;b.textContent="Recherche des restaurants…";await callDeck();b.disabled=false;b.textContent="Lancer le choix";refresh()});
+}
+
+/* ---------- swipe ---------- */
+function cardHtml(p,cls){
+  return `<div class="card ${cls}"><div class="band" style="background:${band(p.name)}">${emoji(p.cuisine)}<i class="tag like">J’aime</i><i class="tag nope">Non</i></div>
+  <div class="cbody"><h2>${esc(p.name)}</h2><p>${esc(p.cuisine||"Restaurant")}</p>
+  <div class="chips">${p.rating?`<span>★ ${String(p.rating).replace(".",",")}${p.user_rating_count?` <small>(${p.user_rating_count})</small>`:""}</span>`:""}${p.price_level?`<span>${"€".repeat(p.price_level)}</span>`:""}${p.distance_m!=null?`<span>${dist(p.distance_m)}</span>`:""}${p.open_now===true?`<span class="open">Ouvert</span>`:p.open_now===false?`<span class="closed">Fermé</span>`:""}</div>
+  <p>${esc(p.address||"")}</p><p class="hint">Touche la carte pour la voir sur Google Maps</p></div></div>`;
+}
+function showSwipe(){
+  S.screen="swipe";
+  const [a,b]=S.queue;
+  app.innerHTML=`<div class="top"><span>${S.queue.length} restaurant${S.queue.length>1?"s":""} à juger</span><span><button class="link" onclick="showLobby(true)">Inviter</button><button class="link" onclick="showFavs()">Coups de cœur</button><button class="link" id="lv">Quitter</button></span></div>
+  <div class="deck">${b?cardHtml(b,"next"):""}${cardHtml(a,"topcard")}</div>
+  <div class="btns"><button class="round no" id="no" aria-label="Non">✕</button><button class="round yes" id="yes" aria-label="J’aime">♥</button></div>`;
+  $("#lv").onclick=leave;$("#no").onclick=()=>decide(false);$("#yes").onclick=()=>decide(true);
+  bindCard($(".topcard"));
+}
+function bindCard(el){
+  let x0=0,dx=0,down=false,moved=false;
+  el.onpointerdown=e=>{down=true;moved=false;dx=0;x0=e.clientX;el.setPointerCapture(e.pointerId);el.style.transition="none"};
+  el.onpointermove=e=>{if(!down)return;dx=e.clientX-x0;if(Math.abs(dx)>6)moved=true;el.style.transform=`translateX(${dx}px) rotate(${dx/18}deg)`;el.dataset.d=dx>40?"like":dx<-40?"nope":""};
+  el.onpointerup=()=>{if(!down)return;down=false;el.style.transition="transform .25s";
+    if(Math.abs(dx)>110)return decide(dx>0);
+    el.style.transform="";el.dataset.d="";
+    if(!moved)window.open(mapsUrl(S.queue[0]),"_blank","noopener")};
+  el.onpointercancel=()=>{down=false;el.style.transform=""};
+}
+let busy=false;
+async function decide(like){
+  if(busy)return;busy=true;
+  const p=S.queue.shift(),el=$(".topcard");
+  sb.from("user_places").upsert({user_id:S.uid,google_place_id:p.google_place_id,liked:like,name:like?p.name:null}).then(()=>{});
+  if(like&&S.parts.length<2)toast("Ajouté à tes coups de cœur");
+  if(el){el.style.transition="transform .2s";el.dataset.d=like?"like":"nope";el.style.transform=`translateX(${like?700:-700}px) rotate(${like?25:-25}deg)`}
+  const ins=sb.from("swipes").insert({session_id:S.session.id,session_place_id:p.id,participant_id:S.me.id,liked:like});
+  await sleep(200);const {error}=await ins;
+  if(error)toast("Swipe non enregistré : "+error.message);
+  if(like){const {data}=await sb.from("matches").select("session_place_id").eq("session_id",S.session.id).limit(1);
+    if(data?.length){S.match=S.places.find(x=>x.id===data[0].session_place_id);busy=false;return showMatch()}}
+  busy=false;S.queue.length?showSwipe():showEmpty();
+}
+
+/* ---------- fin de paquet / match ---------- */
+function showEmpty(){
+  S.screen="empty";
+  const solo=S.parts.length<2;
+  app.innerHTML=`<h1>${solo?"Tout vu !":"Pas de match"}</h1><p class="lead">${solo?(S.session.radius_km<10?"Tu as fait le tour des restaurants proches. Élargis la zone pour en découvrir d’autres.":"Tu as fait le tour des restaurants dans un rayon de 10 km."):"Vous avez tout vu sans être d’accord. "+(isHost()?"Élargis la zone pour voir d’autres restaurants.":"L’hôte peut relancer avec d’autres restaurants.")}</p>
+  ${isHost()?`<button class="cta" id="re">${S.session.radius_km<10?"Élargir de 2 km et relancer":"Relancer une nouvelle sélection"}</button>`:`<p class="hint" style="color:#d7e8de">En attente de l’hôte…</p>`}
+  <div class="row"><button class="ghost" onclick="showFavs()">Mes coups de cœur</button><button class="ghost" id="lv">Quitter</button></div>`;
+  $("#lv").onclick=leave;
+  $("#re")&&($("#re").onclick=async()=>{$("#re").disabled=true;await callDeck(relaunchBody());refresh()});
+}
+function showMatch(){
+  S.screen="match";const p=S.match;
+  app.innerHTML=`<div class="match"><div class="em">${emoji(p.cuisine)}</div><p style="margin:0">C’est décidé, on mange chez</p><h2>${esc(p.name)}</h2>
+  <p>${esc(p.address||"")}</p>
+  <div class="row"><a class="cta" target="_blank" rel="noopener" href="${esc(mapsUrl(p))}">Voir sur Google Maps</a>
+  <a class="cta alt" style="background:var(--ink);color:#fff" target="_blank" rel="noopener" href="${esc(routeUrl(p))}">Itinéraire</a>
+  ${isHost()?`<button class="ghost" id="re">Choisir un autre restaurant</button>`:""}<button class="ghost" id="lv">Terminer</button></div></div>`;
+  $("#lv").onclick=leave;
+  $("#re")&&($("#re").onclick=async()=>{$("#re").disabled=true;await callDeck(relaunchBody());refresh()});
+}
+function joinByCode(){const c=$("#jc").value.trim();if(c.length<4)return toast("Entre le code de la partie (6 caractères).");showJoin(c)}
+async function showFavs(){
+  S.screen="favs";
+  const {data}=await sb.from("user_places").select("google_place_id,name").eq("liked",true).order("saved_at",{ascending:false});
+  const l=data||[];
+  app.innerHTML=`<div class="top"><button class="link" id="bk">← Retour</button><span>${l.length} coup${l.length>1?"s":""} de cœur</span></div><h1>Mes coups de cœur</h1>
+  ${l.length?`<div class="row">${l.map(x=>`<div class="panel" style="grid-template-columns:1fr auto;align-items:center"><b>${esc(x.name||"Restaurant")}</b><span style="display:flex;gap:12px"><a class="link" style="color:var(--basil)" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(x.name||"")}&query_place_id=${x.google_place_id}">Maps</a><button class="link" style="color:var(--tomato)" data-rm="${x.google_place_id}">Retirer</button></span></div>`).join("")}</div>`:`<p class="lead">Rien pour l’instant. Swipe à droite sur un restaurant pour le garder ici.</p>`}`;
+  $("#bk").onclick=()=>{S.screen="";S.session?refresh():showHome()};
+  app.querySelectorAll("[data-rm]").forEach(b=>b.onclick=async()=>{await sb.from("user_places").update({liked:false}).eq("google_place_id",b.dataset.rm);showFavs()});
+}
+init();
+</script>
+</body>
+</html>
