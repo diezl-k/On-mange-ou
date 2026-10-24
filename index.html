@@ -41,7 +41,9 @@ button{font:inherit;cursor:pointer}
 .card{position:absolute;inset:0;background:var(--paper);color:var(--ink);border-radius:26px;overflow:hidden;display:flex;flex-direction:column;touch-action:pan-y;user-select:none;box-shadow:0 14px 30px rgba(0,0,0,.28)}
 .card.next{transform:scale(.95) translateY(12px);opacity:.9}
 .band{flex:0 0 46%;display:grid;place-items:center;font-size:5.5rem;position:relative}
-.tag{position:absolute;top:16px;font:800 1.3rem "Bricolage Grotesque",sans-serif;border:3px solid var(--ink);border-radius:10px;padding:2px 10px;opacity:0;font-style:normal;background:var(--paper)}
+.band img.ph{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .3s;pointer-events:none}
+.band img.ph.on{opacity:1}
+.tag{z-index:1;position:absolute;top:16px;font:800 1.3rem "Bricolage Grotesque",sans-serif;border:3px solid var(--ink);border-radius:10px;padding:2px 10px;opacity:0;font-style:normal;background:var(--paper)}
 .tag.like{left:16px;transform:rotate(-8deg)}.tag.nope{right:16px;transform:rotate(8deg)}
 .card[data-d=like] .tag.like,.card[data-d=nope] .tag.nope{opacity:1}
 .cbody{padding:16px 18px;display:grid;gap:8px;align-content:start}
@@ -90,6 +92,7 @@ async function init(){
   let {data:{session}}=await sb.auth.getSession();
   if(!session){const r=await sb.auth.signInAnonymously();if(r.error)return fatal("Connexion impossible. Vérifie que « Allow anonymous sign-ins » est activé dans Supabase.");session=r.data.session}
   S.uid=session.user.id;
+  if(new URLSearchParams(location.search).has("admin"))return showAdmin();
   const code=new URLSearchParams(location.search).get("code");
   const id=saved();
   if(id){const {data}=await sb.from("sessions").select("*").eq("id",id).maybeSingle();
@@ -102,17 +105,15 @@ function showHome(){
   S.screen="home";
   const opt=(a)=>a.map(([v,l])=>`<option value="${v}">${l}</option>`).join("");
   app.innerHTML=`<h1>On mange où&nbsp;?</h1>
-  <p class="lead">Swipe sur les vrais restaurants autour de toi, seul ou à plusieurs. Si quelqu’un aime le même, c’est un match.</p>
+  <p class="lead">Des adresses tendance autour de toi pour un dîner à deux, ou juste pour découvrir. Si quelqu’un aime le même, c’est un match.</p>
   <button type="button" class="cta alt" id="solo" onclick="create(true)">Restos autour de moi</button>
   <p class="hint" style="color:#d7e8de;margin:8px 0 18px">Utilise ta position. Les réglages ci-dessous sont facultatifs. <button class="link" onclick="showFavs()">Mes coups de cœur</button></p>
   <div class="loc" style="margin:0 0 18px"><input id="jc" placeholder="Un code à rejoindre ?" maxlength="6" autocapitalize="characters" style="text-transform:uppercase"><button type="button" class="ghost" style="color:var(--paper)" onclick="joinByCode()">Rejoindre</button></div>
   <div class="panel">
    <label>Ton prénom <small>(facultatif en solo)</small><input id="name" maxlength="30" autocomplete="given-name"></label>
-   <div class="seg-row"><button type="button" class="seg on" data-mode="sur_place">Sur place</button><button type="button" class="seg" data-mode="livraison">Livraison</button></div>
    <label>Rayon&nbsp;: <b id="rv">3 km</b><input type="range" id="rad" min="1" max="10" value="3"></label>
    <div class="two"><label>Cuisine<select id="cu">${opt([["","Toutes"],["sushi","Sushi"],["burger","Burger"],["pizza","Pizza"],["indien","Indien"],["italien","Italien"],["chinois","Chinois"],["thaï","Thaï"],["mexicain","Mexicain"],["libanais","Libanais"],["français","Français"]])}</select></label>
-   <label>Budget<select id="pr">${opt([["","Tous"],["1","€"],["2","€€"],["3","€€€"],["4","€€€€"]])}</select></label></div>
-   <label class="chk"><input type="checkbox" id="op"> Ouvert maintenant</label>
+   <label>Budget<select id="pr">${opt([["","€€ et plus"],["2","€€"],["3","€€€"],["4","€€€€"]])}</select></label></div>
    <label>Où êtes-vous&nbsp;?<div class="loc"><input id="addr" placeholder="Ville ou adresse" autocomplete="street-address"><button type="button" id="gps" class="ghost">Ma position</button></div></label>
    <button type="button" class="ghost" id="go" style="color:var(--ink)" onclick="create(false)">Créer une partie à plusieurs</button>
   </div>`;
@@ -131,7 +132,7 @@ async function create(solo){
   const addr=$("#addr").value.trim();
   const pos=addr?await geocode(addr):(S.pos||await locate());
   if(!pos){btn.disabled=false;return toast("Indique ta position : bouton « Ma position » ou une adresse trouvable.")}
-  const {data,error}=await sb.rpc("create_session",{p_display_name:name,p_mode:S.mode,p_radius_km:+$("#rad").value,p_cuisine:$("#cu").value||null,p_price_level:$("#pr").value?+$("#pr").value:null,p_open_now:$("#op").checked,p_lat:pos.lat,p_lng:pos.lng});
+  const {data,error}=await sb.rpc("create_session",{p_display_name:name,p_mode:S.mode,p_radius_km:+$("#rad").value,p_cuisine:$("#cu").value||null,p_price_level:$("#pr").value?+$("#pr").value:null,p_open_now:false,p_lat:pos.lat,p_lng:pos.lng});
   if(error){btn.disabled=false;return toast("Création impossible : "+error.message)}
   S.session=data;
   if(solo){btn.textContent="Recherche des restaurants…";await callDeck()}
@@ -215,7 +216,7 @@ function showLobby(inv){
 
 /* ---------- swipe ---------- */
 function cardHtml(p,cls){
-  return `<div class="card ${cls}"><div class="band" style="background:${band(p.name)}">${emoji(p.cuisine)}<i class="tag like">J’aime</i><i class="tag nope">Non</i></div>
+  return `<div class="card ${cls}"><div class="band" style="background:${band(p.name)}">${emoji(p.cuisine)}${p.photo_name?`<img class="ph" data-ph="${esc(p.photo_name)}" alt="" draggable="false">`:""}<i class="tag like">J’aime</i><i class="tag nope">Non</i></div>
   <div class="cbody"><h2>${esc(p.name)}</h2><p>${esc(p.cuisine||"Restaurant")}</p>
   <div class="chips">${p.rating?`<span>★ ${String(p.rating).replace(".",",")}${p.user_rating_count?` <small>(${p.user_rating_count})</small>`:""}</span>`:""}${p.price_level?`<span>${"€".repeat(p.price_level)}</span>`:""}${p.distance_m!=null?`<span>${dist(p.distance_m)}</span>`:""}${p.open_now===true?`<span class="open">Ouvert</span>`:p.open_now===false?`<span class="closed">Fermé</span>`:""}</div>
   <p>${esc(p.address||"")}</p><p class="hint">Touche la carte pour la voir sur Google Maps</p></div></div>`;
@@ -228,6 +229,22 @@ function showSwipe(){
   <div class="btns"><button class="round no" id="no" aria-label="Non">✕</button><button class="round yes" id="yes" aria-label="J’aime">♥</button></div>`;
   $("#lv").onclick=leave;$("#no").onclick=()=>decide(false);$("#yes").onclick=()=>decide(true);
   bindCard($(".topcard"));
+  loadPhotos();
+}
+const PH=new Map();
+async function photoUrl(name){
+  if(PH.has(name))return PH.get(name);
+  let u=null;
+  try{const {data:{session}}=await sb.auth.getSession();
+    const r=await fetch(`${SB_URL}/functions/v1/place-photo?w=700&name=${encodeURIComponent(name)}`,{headers:{Authorization:"Bearer "+session.access_token,apikey:SB_KEY}});
+    if(r.ok)u=URL.createObjectURL(await r.blob())}catch{}
+  PH.set(name,u);return u;
+}
+function loadPhotos(){
+  document.querySelectorAll("img[data-ph]").forEach(async im=>{
+    const u=await photoUrl(im.dataset.ph);
+    if(u&&im.isConnected){im.onload=()=>im.classList.add("on");im.src=u}
+  });
 }
 function bindCard(el){
   let x0=0,dx=0,down=false,moved=false;
@@ -274,6 +291,65 @@ function showMatch(){
   $("#lv").onclick=leave;
   $("#re")&&($("#re").onclick=async()=>{$("#re").disabled=true;await callDeck(relaunchBody());refresh()});
 }
+/* ---------- admin : sélection des restaurants ---------- */
+let AC="",CAND=[],RES=[];
+const AREAS=[["Marais / Louvre (1er–4e)",48.8606,2.35],["Quartier Latin / Saint-Germain (5e–7e)",48.852,2.328],["Champs-Élysées / Opéra (8e–9e)",48.874,2.32],["Canal / Oberkampf (10e–11e)",48.87,2.37],["Bastille / Bercy / 13e",48.842,2.375],["Montparnasse / 15e",48.842,2.305],["16e–17e",48.875,2.28],["Montmartre / 18e–20e",48.885,2.35]];
+async function adm(action,extra={}){
+  const {data,error}=await sb.functions.invoke("admin-curate",{body:{code:AC,action,...extra}});
+  if(error){let m="Erreur serveur";try{m=(await error.context.json()).error||m}catch{}throw new Error(m)}
+  return data;
+}
+function showAdmin(){
+  S.screen="admin";
+  app.innerHTML=`<h1>Admin</h1><p class="lead">Sélection des restaurants de l’appli.</p><div class="panel"><label>Code secret<input id="ac" type="password" autocomplete="off"></label><button class="cta" id="ok">Entrer</button></div>`;
+  $("#ok").onclick=async()=>{AC=$("#ac").value;try{await adm("check");admHome("sug")}catch(e){toast(e.message)}};
+}
+function admHome(tab){
+  const b=(t,l)=>`<button class="seg ${tab===t?"on":""}" onclick="admHome('${t}')">${l}</button>`;
+  app.innerHTML=`<div class="top"><span>Admin</span><button class="link" onclick="location.href=location.pathname">Quitter</button></div>
+  <div class="seg-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:14px">${b("sug","Suggestions")}${b("se","Recherche")}${b("ls","Ma sélection")}</div><div id="ad"></div>`;
+  tab==="sug"?admSug():tab==="se"?admSearch():admList();
+}
+function admItem(p){
+  return `<div class="band" style="position:relative;flex:none;height:150px;border-radius:14px;overflow:hidden;background:${band(p.name)}">${emoji(p.type)}${p.photo?`<img class="ph" data-ph="${esc(p.photo)}" alt="" draggable="false">`:""}</div>
+  <h3 style="margin:10px 0 2px">${esc(p.name)}</h3><p class="hint" style="margin:0">${esc(p.type||"")}</p>
+  <div class="chips" style="margin:8px 0;color:var(--ink)">${p.rating?`<span>★ ${String(p.rating).replace(".",",")} <small>(${p.count})</small></span>`:""}${p.price?`<span>${"€".repeat(p.price)}</span>`:""}</div>
+  <p class="hint" style="margin:0 0 10px;color:var(--mute)">${esc(p.address||"")} · <a style="color:var(--basil)" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.name)}&query_place_id=${p.id}">Voir sur Maps</a></p>`;
+}
+function admSug(){
+  $("#ad").innerHTML=`<div class="panel"><label>Quartier<select id="ar">${AREAS.map((a,i)=>`<option value="${i}">${a[0]}</option>`).join("")}</select></label><button class="cta" id="ld">Chercher des suggestions</button></div><div id="cd"></div>`;
+  $("#ld").onclick=async()=>{const a=AREAS[$("#ar").value];$("#ld").disabled=true;$("#ld").textContent="Recherche…";
+    try{CAND=(await adm("suggest",{lat:a[1],lng:a[2],radius_km:2})).places}catch(e){toast(e.message)}
+    $("#ld").disabled=false;$("#ld").textContent="Chercher des suggestions";admCard()};
+}
+function admCard(){
+  const p=CAND[0],el=$("#cd");
+  if(!p){el.innerHTML=`<p class="lead" style="margin-top:14px">Plus de suggestions ici. Change de quartier.</p>`;return}
+  el.innerHTML=`<div class="panel" style="margin-top:14px"><p class="hint" style="margin:0">${CAND.length} à examiner</p>${admItem(p)}<div class="two"><button class="ghost" style="color:var(--ink)" onclick="admAct('no')">Refuser</button><button class="cta" onclick="admAct('ok')">Valider</button></div></div>`;
+  loadPhotos();
+}
+async function admAct(k){
+  const p=CAND[0];
+  try{await adm(k==="ok"?"add":"reject",k==="ok"?{place:p}:{id:p.id});toast(k==="ok"?"Validé ✓":"Refusé");CAND.shift();admCard()}catch(e){toast(e.message)}
+}
+function admSearch(){
+  $("#ad").innerHTML=`<div class="loc"><input id="q" placeholder="Nom du restaurant (ex. Girafe Paris)"><button class="ghost" style="color:var(--paper)" id="go2">Chercher</button></div><div id="rs"></div>`;
+  $("#go2").onclick=async()=>{
+    try{RES=(await adm("search",{query:$("#q").value})).places}catch(e){return toast(e.message)}
+    $("#rs").innerHTML=RES.map((p,i)=>`<div class="panel" style="margin-top:12px">${admItem(p)}${p.status==="added"?`<b>Déjà dans la sélection</b>`:`<button class="cta" onclick="admAdd(${i},this)">Valider</button>`}</div>`).join("")||`<p class="lead" style="margin-top:12px">Aucun résultat.</p>`;
+    loadPhotos();
+  };
+}
+async function admAdd(i,btn){
+  btn.disabled=true;
+  try{await adm("add",{place:RES[i]});btn.outerHTML="<b>Ajouté ✓</b>"}catch(e){btn.disabled=false;toast(e.message)}
+}
+async function admList(){
+  $("#ad").innerHTML=`<p class="lead">Chargement…</p>`;
+  let d;try{d=await adm("list")}catch(e){return toast(e.message)}
+  $("#ad").innerHTML=`<p class="lead">${d.places.length} restaurant${d.places.length>1?"s":""} dans la sélection</p>`+d.places.map(p=>`<div class="panel" style="margin-bottom:10px;grid-template-columns:1fr auto;align-items:center"><span><b>${esc(p.name)}</b><br><small>${esc(p.area||"")}</small></span><button class="link" style="color:var(--tomato)" onclick="admRm('${p.google_place_id}')">Retirer</button></div>`).join("");
+}
+async function admRm(id){try{await adm("remove",{id});admList()}catch(e){toast(e.message)}}
 function joinByCode(){const c=$("#jc").value.trim();if(c.length<4)return toast("Entre le code de la partie (6 caractères).");showJoin(c)}
 async function showFavs(){
   S.screen="favs";
